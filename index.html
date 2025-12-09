@@ -1171,6 +1171,144 @@
             color: white;
         }
 
+        /* Notifications dropdown */
+        .notifications-dropdown {
+            position: absolute;
+            top: 56px;
+            right: 100px;
+            background-color: #272727;
+            border-radius: 8px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .notifications-dropdown.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 16px;
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid #3f3f3f;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #3f3f3f;
+            cursor: pointer;
+        }
+
+        .notification-item.unread {
+            background-color: rgba(62, 166, 255, 0.1);
+        }
+
+        .notification-item:hover {
+            background-color: #3f3f3f;
+        }
+
+        .notification-content {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Subscriptions page */
+        .subscriptions-container {
+            padding: 24px;
+        }
+
+        .subscriptions-title {
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        .subscriptions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .subscription-channel-card {
+            background-color: #272727;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .subscription-channel-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .subscription-channel-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            overflow: hidden;
+            background-color: #3ea6ff;
+        }
+
+        .subscription-channel-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .subscription-channel-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+
+        .subscription-channel-stats {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Search results */
+        .search-results-container {
+            padding: 24px;
+        }
+
+        .search-results-title {
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        .search-results-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #3f3f3f;
+            padding-bottom: 8px;
+        }
+
+        .search-tab {
+            background: none;
+            border: none;
+            color: #aaa;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 3px solid transparent;
+        }
+
+        .search-tab.active {
+            color: white;
+            border-bottom-color: #ff0000;
+        }
+
         /* Responsive design */
         @media (max-width: 1024px) {
             .sidebar {
@@ -1314,17 +1452,13 @@
         <!-- Header -->
         <header>
             <div class="search-container">
-                <input type="text" class="search-input" id="search-input" placeholder="Rechercher">
+                <input type="text" class="search-input" id="search-input" placeholder="Rechercher vidéos, chaînes...">
                 <button class="search-button" id="search-button">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
             
             <div class="header-right">
-                <button class="header-btn" id="notifications-btn">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge">3</span>
-                </button>
                 <button class="upload-btn" id="open-upload-modal">
                     <i class="fas fa-upload"></i>
                     Importer
@@ -1373,23 +1507,6 @@
             </div>
         </div>
         
-        <!-- Notifications dropdown -->
-        <div class="notifications-dropdown" id="notifications-dropdown">
-            <div class="notifications-header">Notifications</div>
-            <div class="notification-item unread">
-                <div class="notification-content">Vous avez un nouveau commentaire sur votre vidéo</div>
-                <div class="notification-time">Il y a 2 heures</div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-content">Votre vidéo a été ajoutée aux favoris par 5 personnes</div>
-                <div class="notification-time">Il y a 1 jour</div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-content">Nouvel abonné : TechReview Channel</div>
-                <div class="notification-time">Il y a 2 jours</div>
-            </div>
-        </div>
-        
         <!-- Home section -->
         <div class="content-section active" id="home-section">
             <div class="home-container">
@@ -1423,12 +1540,29 @@
             </div>
         </div>
         
-        <!-- Subscriptions section (EMPTY NOW) -->
+        <!-- Subscriptions section -->
         <div class="content-section" id="subscriptions-section">
             <div class="subscriptions-container">
                 <h2 class="subscriptions-title">Abonnements</h2>
-                <div class="subscriptions-list" id="subscriptions-list">
-                    <!-- Will be empty as requested -->
+                <div class="subscriptions-grid" id="subscriptions-grid">
+                    <!-- Subscriptions will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search results section -->
+        <div class="content-section" id="search-section">
+            <div class="search-results-container">
+                <h2 class="search-results-title" id="search-results-title">Résultats de recherche</h2>
+                <div class="search-results-tabs">
+                    <button class="search-tab active" data-search-tab="videos">Vidéos</button>
+                    <button class="search-tab" data-search-tab="channels">Chaînes</button>
+                </div>
+                <div id="search-videos-results">
+                    <!-- Search video results will be loaded here -->
+                </div>
+                <div id="search-channels-results" style="display: none;">
+                    <!-- Search channel results will be loaded here -->
                 </div>
             </div>
         </div>
@@ -1766,7 +1900,9 @@
             SAVED_VIDEOS: 'yourebe_saved_videos',
             USER_PROFILE: 'yourebe_user_profile',
             VIEWS_TRACKING: 'yourebe_views_tracking',
-            REPORTS: 'yourebe_reports'
+            REPORTS: 'yourebe_reports',
+            SUBSCRIPTIONS: 'yourebe_subscriptions',
+            CHANNELS: 'yourebe_channels'
         };
 
         // Gestion des données avec stockage local
@@ -1781,21 +1917,18 @@
                 this.userProfile = this.loadFromStorage(STORAGE_KEYS.USER_PROFILE) || this.getDefaultProfile();
                 this.viewsTracking = this.loadFromStorage(STORAGE_KEYS.VIEWS_TRACKING) || {};
                 this.reports = this.loadFromStorage(STORAGE_KEYS.REPORTS) || [];
+                this.subscriptions = this.loadFromStorage(STORAGE_KEYS.SUBSCRIPTIONS) || [];
+                this.channels = this.loadFromStorage(STORAGE_KEYS.CHANNELS) || this.getDefaultChannels();
                 
-                this.notifications = [];
                 this.currentVideoId = null;
                 this.currentSection = "home";
                 this.libraryTab = "my-videos";
                 this.profileTab = "videos";
                 this.selectedThumbnail = "default";
-                this.subscribedChannels = new Set();
+                this.searchTab = "videos";
                 
-                // Notifications
-                this.notifications = [
-                    { id: 1, content: "Vous avez un nouveau commentaire sur votre vidéo", time: "Il y a 2 heures", read: false },
-                    { id: 2, content: "Votre vidéo a été ajoutée aux favoris par 5 personnes", time: "Il y a 1 jour", read: true },
-                    { id: 3, content: "Nouvel abonné : TechReview Channel", time: "Il y a 2 jours", read: true }
-                ];
+                // S'assurer que l'utilisateur actuel est dans les chaînes
+                this.addUserChannel();
             }
             
             getDefaultProfile() {
@@ -1805,8 +1938,54 @@
                     subscribers: 0,
                     totalViews: 0,
                     videoCount: 0,
-                    isAdmin: true // L'utilisateur est admin pour pouvoir supprimer toutes les vidéos
+                    isAdmin: false
                 };
+            }
+            
+            getDefaultChannels() {
+                return [
+                    {
+                        id: "techreview",
+                        username: "TechReview Channel",
+                        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TechReview&backgroundColor=ff6b6b",
+                        subscribers: 12500,
+                        videos: 42,
+                        description: "Chaîne de technologie et de critiques de produits"
+                    },
+                    {
+                        id: "cookingmaster",
+                        username: "Cooking Master",
+                        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Cooking&backgroundColor=51cf66",
+                        subscribers: 8500,
+                        videos: 36,
+                        description: "Recettes de cuisine faciles et délicieuses"
+                    },
+                    {
+                        id: "gamingpro",
+                        username: "Gaming Pro",
+                        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Gaming&backgroundColor=fcc419",
+                        subscribers: 21500,
+                        videos: 78,
+                        description: "Gameplay, astuces et actualités gaming"
+                    }
+                ];
+            }
+            
+            addUserChannel() {
+                // Vérifier si l'utilisateur est déjà dans les chaînes
+                const userExists = this.channels.some(channel => channel.id === this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
+                
+                if (!userExists) {
+                    this.channels.push({
+                        id: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
+                        username: this.userProfile.username,
+                        avatar: this.userProfile.avatar,
+                        subscribers: this.userProfile.subscribers,
+                        videos: this.getUserVideos().length,
+                        description: "Chaîne personnelle"
+                    });
+                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                }
             }
             
             // Stockage local
@@ -1832,6 +2011,24 @@
             updateProfile(updates) {
                 this.userProfile = { ...this.userProfile, ...updates };
                 this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
+                
+                // Mettre à jour la chaîne correspondante
+                this.updateUserChannel();
+            }
+            
+            updateUserChannel() {
+                const channelIndex = this.channels.findIndex(channel => channel.id === this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
+                if (channelIndex !== -1) {
+                    this.channels[channelIndex] = {
+                        id: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
+                        username: this.userProfile.username,
+                        avatar: this.userProfile.avatar,
+                        subscribers: this.userProfile.subscribers,
+                        videos: this.getUserVideos().length,
+                        description: "Chaîne personnelle"
+                    };
+                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                }
             }
             
             getProfileStats() {
@@ -1847,6 +2044,71 @@
                     videoCount: videoCount,
                     isAdmin: this.userProfile.isAdmin
                 };
+            }
+            
+            // Gestion des abonnements
+            toggleSubscription(channelId) {
+                const index = this.subscriptions.indexOf(channelId);
+                const channel = this.getChannelById(channelId);
+                
+                if (index === -1) {
+                    // S'abonner
+                    this.subscriptions.push(channelId);
+                    if (channel) {
+                        // Augmenter le nombre d'abonnés de la chaîne
+                        this.increaseChannelSubscribers(channelId);
+                        
+                        // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
+                        if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
+                            this.userProfile.subscribers++;
+                            this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
+                        }
+                    }
+                } else {
+                    // Se désabonner
+                    this.subscriptions.splice(index, 1);
+                    if (channel) {
+                        // Diminuer le nombre d'abonnés de la chaîne
+                        this.decreaseChannelSubscribers(channelId);
+                        
+                        // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
+                        if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
+                            this.userProfile.subscribers = Math.max(0, this.userProfile.subscribers - 1);
+                            this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
+                        }
+                    }
+                }
+                
+                this.saveToStorage(STORAGE_KEYS.SUBSCRIPTIONS, this.subscriptions);
+                return index === -1; // Retourne true si nouvel abonnement, false si désabonnement
+            }
+            
+            increaseChannelSubscribers(channelId) {
+                const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
+                if (channelIndex !== -1) {
+                    this.channels[channelIndex].subscribers++;
+                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                }
+            }
+            
+            decreaseChannelSubscribers(channelId) {
+                const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
+                if (channelIndex !== -1 && this.channels[channelIndex].subscribers > 0) {
+                    this.channels[channelIndex].subscribers--;
+                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                }
+            }
+            
+            isSubscribed(channelId) {
+                return this.subscriptions.includes(channelId);
+            }
+            
+            getSubscribedChannels() {
+                return this.channels.filter(channel => this.subscriptions.includes(channel.id));
+            }
+            
+            getChannelById(channelId) {
+                return this.channels.find(channel => channel.id === channelId);
             }
             
             // Gestion des vues intelligente
@@ -1933,8 +2195,9 @@
                     dislikes: 0,
                     comments: 0,
                     channel: this.userProfile.username,
+                    channelId: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
                     channelAvatar: this.userProfile.avatar,
-                    subscribers: "0",
+                    subscribers: this.userProfile.subscribers.toString(),
                     date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
                     videoUrl: videoData.videoUrl,
                     thumbnail: videoData.thumbnail || this.getDefaultThumbnail(isShort),
@@ -1944,7 +2207,6 @@
                     aspectRatio: videoData.aspectRatio || "16:9",
                     uploadedByUser: true,
                     saved: false,
-                    isSubscribed: false,
                     createdAt: new Date().toISOString(),
                     creatorId: this.userProfile.username // Identifiant du créateur
                 };
@@ -1960,7 +2222,20 @@
                 // Mettre à jour les statistiques du profil
                 this.updateProfileStats();
                 
+                // Mettre à jour le nombre de vidéos de la chaîne
+                this.updateChannelVideoCount(this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
+                
                 return newVideo;
+            }
+            
+            updateChannelVideoCount(channelId) {
+                const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
+                if (channelIndex !== -1) {
+                    // Compter le nombre de vidéos de cette chaîne
+                    const channelVideos = [...this.videos, ...this.shorts].filter(video => video.channelId === channelId);
+                    this.channels[channelIndex].videos = channelVideos.length;
+                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                }
             }
             
             getDefaultThumbnail(isShort) {
@@ -2018,14 +2293,13 @@
                 }
             }
             
-            // Supprimer une vidéo (fonctionne pour toutes les vidéos)
+            // Supprimer une vidéo (fonctionne uniquement pour les vidéos de l'utilisateur)
             deleteVideo(id) {
                 const video = this.getVideoById(id);
                 const isUserVideo = video && video.creatorId === this.userProfile.username;
-                const isAdmin = this.userProfile.isAdmin;
                 
-                // L'utilisateur peut supprimer ses propres vidéos OU toutes les vidéos s'il est admin
-                if (!isUserVideo && !isAdmin) {
+                // L'utilisateur ne peut supprimer que ses propres vidéos
+                if (!isUserVideo) {
                     alert("Vous ne pouvez supprimer que vos propres vidéos.");
                     return false;
                 }
@@ -2051,10 +2325,11 @@
                 this.saveToStorage(STORAGE_KEYS.SAVED_VIDEOS, this.savedVideos);
                 this.saveToStorage(STORAGE_KEYS.COMMENTS, this.comments);
                 
-                // Mettre à jour les statistiques du profil si c'était une vidéo de l'utilisateur
-                if (isUserVideo) {
-                    this.updateProfileStats();
-                }
+                // Mettre à jour les statistiques du profil
+                this.updateProfileStats();
+                
+                // Mettre à jour le nombre de vidéos de la chaîne
+                this.updateChannelVideoCount(this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
                 
                 return true;
             }
@@ -2117,10 +2392,9 @@
                 
                 const comment = this.comments[commentIndex];
                 const isUserComment = comment.author === this.userProfile.username;
-                const isAdmin = this.userProfile.isAdmin;
                 
-                // L'utilisateur peut supprimer ses propres commentaires OU tous les commentaires s'il est admin
-                if (!isUserComment && !isAdmin) {
+                // L'utilisateur peut supprimer uniquement ses propres commentaires
+                if (!isUserComment) {
                     alert("Vous ne pouvez supprimer que vos propres commentaires.");
                     return false;
                 }
@@ -2144,7 +2418,7 @@
                 // Marquer les commentaires que l'utilisateur peut supprimer
                 return comments.map(comment => ({
                     ...comment,
-                    canDelete: comment.author === this.userProfile.username || this.userProfile.isAdmin
+                    canDelete: comment.author === this.userProfile.username
                 }));
             }
             
@@ -2221,17 +2495,6 @@
                 return index === -1;
             }
             
-            // Gestion des abonnements
-            toggleSubscription(channelName) {
-                if (this.subscribedChannels.has(channelName)) {
-                    this.subscribedChannels.delete(channelName);
-                    return false;
-                } else {
-                    this.subscribedChannels.add(channelName);
-                    return true;
-                }
-            }
-            
             // Recherche
             searchVideos(query) {
                 if (!query.trim()) return [];
@@ -2243,6 +2506,17 @@
                     video.title.toLowerCase().includes(searchTerm) || 
                     video.description.toLowerCase().includes(searchTerm) ||
                     video.channel.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            searchChannels(query) {
+                if (!query.trim()) return [];
+                
+                const searchTerm = query.toLowerCase();
+                
+                return this.channels.filter(channel => 
+                    channel.username.toLowerCase().includes(searchTerm) ||
+                    channel.description.toLowerCase().includes(searchTerm)
                 );
             }
             
@@ -2280,6 +2554,16 @@
             getSavedVideos() {
                 return [...this.videos, ...this.shorts].filter(v => this.savedVideos.includes(v.id));
             }
+            
+            // Récupérer les vidéos des abonnements
+            getSubscriptionVideos() {
+                const subscribedChannels = this.getSubscribedChannels();
+                const channelIds = subscribedChannels.map(channel => channel.id);
+                
+                return [...this.videos, ...this.shorts].filter(video => 
+                    channelIds.includes(video.channelId)
+                );
+            }
         }
 
         // Initialiser l'application
@@ -2299,7 +2583,7 @@
         const recommendedVideosContainer = document.getElementById('recommended-videos');
         const videosGrid = document.getElementById('videos-grid');
         const shortsGrid = document.getElementById('shorts-grid');
-        const subscriptionsList = document.getElementById('subscriptions-list');
+        const subscriptionsGrid = document.getElementById('subscriptions-grid');
         const historyGrid = document.getElementById('history-grid');
         const libraryContent = document.getElementById('library-content');
         const profileVideosContainer = document.getElementById('profile-videos-container');
@@ -2329,6 +2613,12 @@
         const profileSubscribers = document.getElementById('profile-subscribers');
         const profileTabs = document.querySelectorAll('.profile-tab');
         
+        // Search elements
+        const searchVideosResults = document.getElementById('search-videos-results');
+        const searchChannelsResults = document.getElementById('search-channels-results');
+        const searchResultsTitle = document.getElementById('search-results-title');
+        const searchTabs = document.querySelectorAll('.search-tab');
+        
         // Modals
         const uploadModal = document.getElementById('upload-modal');
         const profileModal = document.getElementById('profile-modal');
@@ -2356,10 +2646,6 @@
         const submitReportBtn = document.getElementById('submit-report');
         const reportDetails = document.getElementById('report-details');
         
-        // Notifications
-        const notificationsBtn = document.getElementById('notifications-btn');
-        const notificationsDropdown = document.getElementById('notifications-dropdown');
-        
         // Variables d'état
         let videoToEdit = null;
         let selectedThumbnailOption = null;
@@ -2372,6 +2658,7 @@
         let hasCountedView = false;
         let videoToReport = null;
         let commentToDelete = null;
+        let currentSearchQuery = '';
         
         // Initialiser l'interface
         function init() {
@@ -2424,6 +2711,26 @@
             
             // Mettre à jour l'état de l'application
             app.currentSection = sectionId;
+        }
+        
+        // Afficher les résultats de recherche
+        function showSearchResults(query) {
+            currentSearchQuery = query;
+            searchResultsTitle.textContent = `Résultats pour "${query}"`;
+            app.searchTab = 'videos';
+            
+            // Activer l'onglet vidéos
+            searchTabs.forEach(tab => tab.classList.remove('active'));
+            document.querySelector('.search-tab[data-search-tab="videos"]').classList.add('active');
+            
+            // Afficher les résultats de vidéos
+            showSearchVideosResults(query);
+            
+            // Cacher les résultats de chaînes
+            searchChannelsResults.style.display = 'none';
+            
+            // Afficher la section de recherche
+            showSection('search');
         }
         
         // Mettre à jour l'avatar utilisateur
@@ -2509,6 +2816,51 @@
                 
                 shortsGrid.appendChild(shortElement);
             });
+        }
+        
+        // Charger les abonnements
+        function loadSubscriptions() {
+            subscriptionsGrid.innerHTML = '';
+            
+            const subscribedChannels = app.getSubscribedChannels();
+            
+            if (subscribedChannels.length === 0) {
+                subscriptionsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaa;">
+                        <i class="fas fa-user-friends" style="font-size: 64px; margin-bottom: 16px; color: #3f3f3f;"></i>
+                        <h3>Aucun abonnement</h3>
+                        <p>Abonnez-vous à des chaînes pour les voir apparaître ici</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            subscribedChannels.forEach(channel => {
+                const channelElement = document.createElement('div');
+                channelElement.className = 'subscription-channel-card';
+                channelElement.dataset.channelId = channel.id;
+                channelElement.innerHTML = `
+                    <div class="subscription-channel-avatar">
+                        <img src="${channel.avatar}" alt="${channel.username}" class="subscription-channel-avatar-img">
+                    </div>
+                    <div class="subscription-channel-name">${channel.username}</div>
+                    <div class="subscription-channel-stats">${channel.subscribers} abonnés • ${channel.videos} vidéos</div>
+                `;
+                
+                channelElement.addEventListener('click', () => {
+                    // Charger les vidéos de cette chaîne
+                    loadChannelVideos(channel.id);
+                });
+                
+                subscriptionsGrid.appendChild(channelElement);
+            });
+        }
+        
+        // Charger les vidéos d'une chaîne
+        function loadChannelVideos(channelId) {
+            // Pour l'instant, nous redirigeons vers la recherche pour cette chaîne
+            searchInput.value = channelId;
+            performSearch();
         }
         
         // Charger le profil utilisateur
@@ -2647,11 +2999,9 @@
             
             // Vérifier si l'utilisateur peut gérer cette vidéo
             const isUserVideo = app.isVideoOwner(video.id);
-            const isAdmin = app.userProfile.isAdmin;
-            const canManage = isUserVideo || isAdmin;
             
             let actionsMenu = '';
-            if (showActions || canManage) {
+            if (showActions || isUserVideo) {
                 actionsMenu = `
                     <div class="video-actions-menu" data-video-id="${video.id}">
                         <i class="fas fa-ellipsis-v"></i>
@@ -2665,8 +3015,6 @@
                                     <i class="fas fa-image"></i>
                                     <span>Changer la miniature</span>
                                 </div>
-                            ` : ''}
-                            ${canManage ? `
                                 <div class="dropdown-item" data-action="delete">
                                     <i class="fas fa-trash"></i>
                                     <span>Supprimer</span>
@@ -2811,9 +3159,10 @@
             document.getElementById('subscriber-count').textContent = `${video.subscribers} abonnés`;
             
             // Mettre à jour le bouton d'abonnement
-            const isSubscribed = app.subscribedChannels.has(video.channel);
+            const isSubscribed = app.isSubscribed(video.channelId);
             subscribeBtn.textContent = isSubscribed ? "Abonné" : "S'abonner";
             subscribeBtn.classList.toggle('subscribed', isSubscribed);
+            subscribeBtn.dataset.channelId = video.channelId;
             
             // Mettre à jour le bouton de sauvegarde
             const isSaved = app.savedVideos.includes(video.id);
@@ -3007,12 +3356,11 @@
             if (!video) return;
             
             const isUserVideo = app.isVideoOwner(videoId);
-            const isAdmin = app.userProfile.isAdmin;
             const message = isUserVideo 
                 ? "Voulez-vous vraiment supprimer cette vidéo ? Cette action est irréversible."
-                : `Voulez-vous vraiment supprimer la vidéo "${video.title}" de ${video.channel} ? Cette action est irréversible.`;
+                : `Vous ne pouvez supprimer que vos propres vidéos.`;
             
-            if (confirm(message)) {
+            if (isUserVideo && confirm(message)) {
                 const success = app.deleteVideo(videoId);
                 
                 if (success) {
@@ -3039,6 +3387,8 @@
                     
                     alert("Vidéo supprimée avec succès !");
                 }
+            } else if (!isUserVideo) {
+                alert(message);
             }
         }
         
@@ -3273,22 +3623,90 @@
             });
         }
         
+        // Afficher les résultats de recherche pour les vidéos
+        function showSearchVideosResults(query) {
+            searchVideosResults.innerHTML = '';
+            
+            const results = app.searchVideos(query);
+            
+            if (results.length === 0) {
+                searchVideosResults.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaa;">
+                        <i class="fas fa-search" style="font-size: 64px; margin-bottom: 16px; color: #3f3f3f;"></i>
+                        <h3>Aucun résultat trouvé</h3>
+                        <p>Aucune vidéo ne correspond à votre recherche</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const videosContainer = document.createElement('div');
+            videosContainer.className = 'videos-grid';
+            
+            results.forEach(video => {
+                const videoElement = createVideoCard(video);
+                videosContainer.appendChild(videoElement);
+            });
+            
+            searchVideosResults.appendChild(videosContainer);
+        }
+        
+        // Afficher les résultats de recherche pour les chaînes
+        function showSearchChannelsResults(query) {
+            searchChannelsResults.innerHTML = '';
+            
+            const results = app.searchChannels(query);
+            
+            if (results.length === 0) {
+                searchChannelsResults.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaa;">
+                        <i class="fas fa-search" style="font-size: 64px; margin-bottom: 16px; color: #3f3f3f;"></i>
+                        <h3>Aucun résultat trouvé</h3>
+                        <p>Aucune chaîne ne correspond à votre recherche</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const channelsContainer = document.createElement('div');
+            channelsContainer.className = 'subscriptions-grid';
+            
+            results.forEach(channel => {
+                const channelElement = document.createElement('div');
+                channelElement.className = 'subscription-channel-card';
+                channelElement.dataset.channelId = channel.id;
+                channelElement.innerHTML = `
+                    <div class="subscription-channel-avatar">
+                        <img src="${channel.avatar}" alt="${channel.username}" class="subscription-channel-avatar-img">
+                    </div>
+                    <div class="subscription-channel-name">${channel.username}</div>
+                    <div class="subscription-channel-stats">${channel.subscribers} abonnés • ${channel.videos} vidéos</div>
+                    <p style="font-size: 12px; color: #aaa; margin-top: 8px;">${channel.description}</p>
+                `;
+                
+                channelElement.addEventListener('click', () => {
+                    // Rechercher les vidéos de cette chaîne
+                    searchInput.value = channel.username;
+                    performSearch();
+                });
+                
+                channelsContainer.appendChild(channelElement);
+            });
+            
+            searchChannelsResults.appendChild(channelsContainer);
+        }
+        
         // Configurer les écouteurs d'événements
         function setupEventListeners() {
             // Navigation dans la sidebar
             document.querySelectorAll('.sidebar-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const section = item.dataset.section;
+                    
                     if (section === 'subscriptions') {
-                        // La section abonnements est vide comme demandé
-                        subscriptionsList.innerHTML = `
-                            <div style="width: 100%; text-align: center; padding: 60px 20px; color: #aaa;">
-                                <i class="fas fa-user-friends" style="font-size: 64px; margin-bottom: 16px; color: #3f3f3f;"></i>
-                                <h3>Aucun abonnement</h3>
-                                <p>Abonnez-vous à des chaînes pour les voir apparaître ici</p>
-                            </div>
-                        `;
+                        loadSubscriptions();
                     }
+                    
                     showSection(section);
                     
                     if (section === 'history') {
@@ -3307,6 +3725,26 @@
                     
                     app.profileTab = tab.dataset.profileTab;
                     loadProfileVideos();
+                });
+            });
+            
+            // Onglets de recherche
+            searchTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    searchTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    app.searchTab = tab.dataset.searchTab;
+                    
+                    if (app.searchTab === 'videos') {
+                        searchVideosResults.style.display = 'block';
+                        searchChannelsResults.style.display = 'none';
+                        showSearchVideosResults(currentSearchQuery);
+                    } else {
+                        searchVideosResults.style.display = 'none';
+                        searchChannelsResults.style.display = 'block';
+                        showSearchChannelsResults(currentSearchQuery);
+                    }
                 });
             });
             
@@ -3405,16 +3843,25 @@
             subscribeBtn.addEventListener('click', () => {
                 if (!app.currentVideoId) return;
                 
-                const video = app.getVideoById(app.currentVideoId);
-                if (video) {
-                    const subscribed = app.toggleSubscription(video.channel);
+                const channelId = subscribeBtn.dataset.channelId;
+                if (channelId) {
+                    const subscribed = app.toggleSubscription(channelId);
                     subscribeBtn.textContent = subscribed ? "Abonné" : "S'abonner";
                     subscribeBtn.classList.toggle('subscribed', subscribed);
                     
-                    if (subscribed) {
-                        video.subscribers = (parseInt(video.subscribers) + 1).toString();
-                        document.getElementById('subscriber-count').textContent = `${video.subscribers} abonnés`;
-                        app.updateVideo(app.currentVideoId, { subscribers: video.subscribers });
+                    // Mettre à jour le compte d'abonnés affiché
+                    const video = app.getVideoById(app.currentVideoId);
+                    if (video) {
+                        const channel = app.getChannelById(channelId);
+                        if (channel) {
+                            video.subscribers = channel.subscribers.toString();
+                            document.getElementById('subscriber-count').textContent = `${video.subscribers} abonnés`;
+                        }
+                    }
+                    
+                    // Recharger les abonnements si on est dans cette section
+                    if (app.currentSection === 'subscriptions') {
+                        loadSubscriptions();
                     }
                 }
             });
@@ -3423,7 +3870,6 @@
             userAvatar.addEventListener('click', (e) => {
                 e.stopPropagation();
                 profileDropdown.classList.toggle('show');
-                notificationsDropdown.classList.remove('show');
             });
             
             // Voir le profil
@@ -3450,17 +3896,9 @@
                 alert("Déconnexion effectuée !");
             });
             
-            // Notifications
-            notificationsBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                notificationsDropdown.classList.toggle('show');
-                profileDropdown.classList.remove('show');
-            });
-            
             // Fermer les dropdowns en cliquant ailleurs
             document.addEventListener('click', () => {
                 profileDropdown.classList.remove('show');
-                notificationsDropdown.classList.remove('show');
             });
             
             // Upload modal
@@ -3670,6 +4108,7 @@
                 userVideos.forEach(video => {
                     app.updateVideo(video.id, {
                         channel: username,
+                        channelId: username.toLowerCase().replace(/\s+/g, ''),
                         channelAvatar: avatarUrl
                     });
                 });
@@ -3696,6 +4135,9 @@
                 }
                 if (app.currentSection === 'library' && app.libraryTab === 'my-videos') {
                     loadLibraryContent();
+                }
+                if (app.currentSection === 'subscriptions') {
+                    loadSubscriptions();
                 }
                 
                 alert("Profil mis à jour avec succès !");
@@ -3827,25 +4269,7 @@
             const query = searchInput.value.trim();
             if (!query) return;
             
-            const results = app.searchVideos(query);
-            
-            videosGrid.innerHTML = '';
-            
-            if (results.length === 0) {
-                videosGrid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #aaa;">
-                        <i class="fas fa-search" style="font-size: 64px; margin-bottom: 16px; color: #3f3f3f;"></i>
-                        <h3>Aucun résultat trouvé</h3>
-                        <p>Aucune vidéo ne correspond à votre recherche</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            results.forEach(video => {
-                const videoElement = createVideoCard(video);
-                videosGrid.appendChild(videoElement);
-            });
+            showSearchResults(query);
         }
 
         // Initialiser l'application
