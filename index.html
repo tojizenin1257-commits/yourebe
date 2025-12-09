@@ -1892,33 +1892,39 @@
     <script>
         // Clé pour le stockage local
         const STORAGE_KEYS = {
-            VIDEOS: 'yourebe_videos',
-            SHORTS: 'yourebe_shorts',
+            // DONNÉES PARTAGÉES (Simulation de base de données)
+            SHARED_VIDEOS: 'yourebe_shared_videos',
+            SHARED_SHORTS: 'yourebe_shared_shorts',
+            SHARED_CHANNELS: 'yourebe_shared_channels',
+            SHARED_COMMENTS: 'yourebe_shared_comments',
+            SHARED_REPORTS: 'yourebe_shared_reports',
+            
+            // DONNÉES PERSONNELLES (Spécifiques à chaque appareil)
+            USER_PROFILE: 'yourebe_user_profile',
             LIKED_VIDEOS: 'yourebe_liked_videos',
             HISTORY: 'yourebe_history',
-            COMMENTS: 'yourebe_comments',
             SAVED_VIDEOS: 'yourebe_saved_videos',
-            USER_PROFILE: 'yourebe_user_profile',
-            VIEWS_TRACKING: 'yourebe_views_tracking',
-            REPORTS: 'yourebe_reports',
             SUBSCRIPTIONS: 'yourebe_subscriptions',
-            CHANNELS: 'yourebe_channels'
+            VIEWS_TRACKING: 'yourebe_views_tracking'
         };
 
         // Gestion des données avec stockage local
         class YourebeApp {
             constructor() {
-                this.videos = this.loadFromStorage(STORAGE_KEYS.VIDEOS) || [];
-                this.shorts = this.loadFromStorage(STORAGE_KEYS.SHORTS) || [];
+                // DONNÉES PARTAGÉES (visibles sur tous les appareils)
+                this.videos = this.loadSharedData(STORAGE_KEYS.SHARED_VIDEOS) || this.getInitialVideos();
+                this.shorts = this.loadSharedData(STORAGE_KEYS.SHARED_SHORTS) || this.getInitialShorts();
+                this.channels = this.loadSharedData(STORAGE_KEYS.SHARED_CHANNELS) || this.getInitialChannels();
+                this.comments = this.loadSharedData(STORAGE_KEYS.SHARED_COMMENTS) || [];
+                this.reports = this.loadSharedData(STORAGE_KEYS.SHARED_REPORTS) || [];
+                
+                // DONNÉES PERSONNELLES (spécifiques à chaque appareil)
+                this.userProfile = this.loadFromStorage(STORAGE_KEYS.USER_PROFILE) || this.getDefaultProfile();
                 this.likedVideos = this.loadFromStorage(STORAGE_KEYS.LIKED_VIDEOS) || [];
                 this.watchHistory = this.loadFromStorage(STORAGE_KEYS.HISTORY) || [];
-                this.comments = this.loadFromStorage(STORAGE_KEYS.COMMENTS) || [];
                 this.savedVideos = this.loadFromStorage(STORAGE_KEYS.SAVED_VIDEOS) || [];
-                this.userProfile = this.loadFromStorage(STORAGE_KEYS.USER_PROFILE) || this.getDefaultProfile();
-                this.viewsTracking = this.loadFromStorage(STORAGE_KEYS.VIEWS_TRACKING) || {};
-                this.reports = this.loadFromStorage(STORAGE_KEYS.REPORTS) || [];
                 this.subscriptions = this.loadFromStorage(STORAGE_KEYS.SUBSCRIPTIONS) || [];
-                this.channels = this.loadFromStorage(STORAGE_KEYS.CHANNELS) || this.getDefaultChannels();
+                this.viewsTracking = this.loadFromStorage(STORAGE_KEYS.VIEWS_TRACKING) || {};
                 
                 this.currentVideoId = null;
                 this.currentSection = "home";
@@ -1927,30 +1933,180 @@
                 this.selectedThumbnail = "default";
                 this.searchTab = "videos";
                 
-                // S'assurer que l'utilisateur actuel est dans les chaînes
-                this.addUserChannel();
+                // S'assurer que l'utilisateur actuel est dans les chaînes partagées
+                this.addUserToSharedChannels();
+                
+                // Synchronisation au démarrage
+                this.syncWithSharedData();
+            }
+            
+            // Méthodes pour les données partagées
+            loadSharedData(key) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Erreur de chargement des données partagées:', e);
+                    return null;
+                }
+            }
+            
+            saveSharedData(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (e) {
+                    console.error('Erreur de sauvegarde des données partagées:', e);
+                    return false;
+                }
+            }
+            
+            // Méthodes pour les données personnelles
+            loadFromStorage(key) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Erreur de chargement:', e);
+                    return null;
+                }
+            }
+            
+            saveToStorage(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (e) {
+                    console.error('Erreur de sauvegarde:', e);
+                    return false;
+                }
+            }
+            
+            // Synchronisation avec les données partagées
+            syncWithSharedData() {
+                // Vérifier si l'utilisateur a déjà des vidéos dans les données partagées
+                const userVideosInShared = this.videos.filter(v => v.creatorId === this.userProfile.username);
+                const userShortsInShared = this.shorts.filter(v => v.creatorId === this.userProfile.username);
+                
+                // Si l'utilisateur a un profil mais pas de vidéos dans les données partagées,
+                // on pourrait éventuellement migrer ses vidéos personnelles vers les données partagées
+                // Pour l'instant, on se contente de synchroniser les chaînes
             }
             
             getDefaultProfile() {
+                // Générer un nom d'utilisateur aléatoire pour différencier les utilisateurs
+                const randomNames = ["Alex", "Jordan", "Taylor", "Casey", "Riley", "Skyler", "Morgan", "Dakota"];
+                const randomName = randomNames[Math.floor(Math.random() * randomNames.length)] + Math.floor(Math.random() * 1000);
+                
                 return {
-                    username: "Utilisateur",
-                    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Utilisateur&backgroundColor=3ea6ff",
+                    username: randomName,
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomName}&backgroundColor=3ea6ff`,
                     subscribers: 0,
                     totalViews: 0,
                     videoCount: 0,
-                    isAdmin: false
+                    isAdmin: false,
+                    deviceId: this.generateDeviceId()
                 };
             }
             
-            getDefaultChannels() {
+            generateDeviceId() {
+                // Générer un ID d'appareil unique
+                return 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            getInitialVideos() {
+                // Vidéos initiales visibles par tous
                 return [
                     {
-                        id: "techreview",
-                        username: "TechReview Channel",
-                        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TechReview&backgroundColor=ff6b6b",
+                        id: 1,
+                        title: "Introduction à la programmation web",
+                        description: "Apprenez les bases du HTML, CSS et JavaScript",
+                        views: 1250,
+                        likes: 89,
+                        dislikes: 2,
+                        comments: 12,
+                        channel: "Tech Academy",
+                        channelId: "techacademy",
+                        channelAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TechAcademy&backgroundColor=3ea6ff",
+                        subscribers: "12500",
+                        date: "15 mars 2023",
+                        videoUrl: "#",
+                        thumbnail: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                        duration: "12:45",
+                        category: "education",
+                        isShort: false,
+                        aspectRatio: "16:9",
+                        uploadedByUser: false,
+                        saved: false,
+                        createdAt: "2023-03-15T10:30:00Z",
+                        creatorId: "techacademy"
+                    },
+                    {
+                        id: 2,
+                        title: "Recette de crêpes facile",
+                        description: "Découvrez comment faire des crêpes parfaites en 10 minutes",
+                        views: 850,
+                        likes: 64,
+                        dislikes: 1,
+                        comments: 8,
+                        channel: "Cooking Master",
+                        channelId: "cookingmaster",
+                        channelAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Cooking&backgroundColor=51cf66",
+                        subscribers: "8500",
+                        date: "20 février 2023",
+                        videoUrl: "#",
+                        thumbnail: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                        duration: "8:20",
+                        category: "cooking",
+                        isShort: false,
+                        aspectRatio: "16:9",
+                        uploadedByUser: false,
+                        saved: false,
+                        createdAt: "2023-02-20T14:15:00Z",
+                        creatorId: "cookingmaster"
+                    }
+                ];
+            }
+            
+            getInitialShorts() {
+                // Shorts initiaux visibles par tous
+                return [
+                    {
+                        id: 101,
+                        title: "Astuce rapide pour coder plus vite",
+                        description: "Une petite astuce pour gagner du temps en programmation",
+                        views: 3200,
+                        likes: 210,
+                        dislikes: 5,
+                        comments: 15,
+                        channel: "Tech Academy",
+                        channelId: "techacademy",
+                        channelAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TechAcademy&backgroundColor=3ea6ff",
+                        subscribers: "12500",
+                        date: "10 mars 2023",
+                        videoUrl: "#",
+                        thumbnail: "https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                        duration: "0:45",
+                        category: "education",
+                        isShort: true,
+                        aspectRatio: "9:16",
+                        uploadedByUser: false,
+                        saved: false,
+                        createdAt: "2023-03-10T09:45:00Z",
+                        creatorId: "techacademy"
+                    }
+                ];
+            }
+            
+            getInitialChannels() {
+                return [
+                    {
+                        id: "techacademy",
+                        username: "Tech Academy",
+                        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TechAcademy&backgroundColor=3ea6ff",
                         subscribers: 12500,
                         videos: 42,
-                        description: "Chaîne de technologie et de critiques de produits"
+                        description: "Apprenez la programmation et les technologies web"
                     },
                     {
                         id: "cookingmaster",
@@ -1971,68 +2127,88 @@
                 ];
             }
             
-            addUserChannel() {
-                // Vérifier si l'utilisateur est déjà dans les chaînes
+            addUserToSharedChannels() {
+                // Vérifier si l'utilisateur est déjà dans les chaînes partagées
                 const userExists = this.channels.some(channel => channel.id === this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
                 
                 if (!userExists) {
+                    // Ajouter l'utilisateur aux chaînes partagées
                     this.channels.push({
                         id: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
                         username: this.userProfile.username,
                         avatar: this.userProfile.avatar,
                         subscribers: this.userProfile.subscribers,
-                        videos: this.getUserVideos().length,
+                        videos: this.getUserVideosFromShared().length,
                         description: "Chaîne personnelle"
                     });
-                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
-                }
-            }
-            
-            // Stockage local
-            saveToStorage(key, data) {
-                try {
-                    localStorage.setItem(key, JSON.stringify(data));
-                } catch (e) {
-                    console.error('Erreur de sauvegarde:', e);
-                }
-            }
-            
-            loadFromStorage(key) {
-                try {
-                    const data = localStorage.getItem(key);
-                    return data ? JSON.parse(data) : null;
-                } catch (e) {
-                    console.error('Erreur de chargement:', e);
-                    return null;
+                    
+                    // Sauvegarder les chaînes mises à jour
+                    this.saveSharedData(STORAGE_KEYS.SHARED_CHANNELS, this.channels);
                 }
             }
             
             // Gestion du profil utilisateur
             updateProfile(updates) {
+                const oldUsername = this.userProfile.username;
                 this.userProfile = { ...this.userProfile, ...updates };
                 this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
                 
-                // Mettre à jour la chaîne correspondante
-                this.updateUserChannel();
+                // Mettre à jour la chaîne correspondante dans les données partagées
+                this.updateUserInSharedChannels(oldUsername);
+                
+                return true;
             }
             
-            updateUserChannel() {
-                const channelIndex = this.channels.findIndex(channel => channel.id === this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
+            updateUserInSharedChannels(oldUsername) {
+                const oldChannelId = oldUsername.toLowerCase().replace(/\s+/g, '');
+                const newChannelId = this.userProfile.username.toLowerCase().replace(/\s+/g, '');
+                
+                // Trouver l'index de l'ancienne chaîne
+                const channelIndex = this.channels.findIndex(channel => channel.id === oldChannelId);
+                
                 if (channelIndex !== -1) {
+                    // Mettre à jour la chaîne
                     this.channels[channelIndex] = {
-                        id: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
+                        id: newChannelId,
                         username: this.userProfile.username,
                         avatar: this.userProfile.avatar,
                         subscribers: this.userProfile.subscribers,
-                        videos: this.getUserVideos().length,
+                        videos: this.getUserVideosFromShared().length,
                         description: "Chaîne personnelle"
                     };
-                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                    
+                    // Mettre à jour toutes les vidéos de l'utilisateur avec le nouveau channelId
+                    this.updateUserVideosChannelId(oldChannelId, newChannelId);
+                    
+                    // Sauvegarder les données partagées
+                    this.saveSharedData(STORAGE_KEYS.SHARED_CHANNELS, this.channels);
                 }
             }
             
+            updateUserVideosChannelId(oldChannelId, newChannelId) {
+                // Mettre à jour les vidéos normales
+                this.videos = this.videos.map(video => {
+                    if (video.channelId === oldChannelId) {
+                        return { ...video, channelId: newChannelId, channel: this.userProfile.username };
+                    }
+                    return video;
+                });
+                
+                // Mettre à jour les shorts
+                this.shorts = this.shorts.map(short => {
+                    if (short.channelId === oldChannelId) {
+                        return { ...short, channelId: newChannelId, channel: this.userProfile.username };
+                    }
+                    return short;
+                });
+                
+                // Sauvegarder les données partagées
+                this.saveSharedData(STORAGE_KEYS.SHARED_VIDEOS, this.videos);
+                this.saveSharedData(STORAGE_KEYS.SHARED_SHORTS, this.shorts);
+            }
+            
             getProfileStats() {
-                const userVideos = this.getUserVideos();
+                const userVideos = this.getUserVideosFromShared();
                 const totalViews = userVideos.reduce((sum, video) => sum + video.views, 0);
                 const videoCount = userVideos.length;
                 
@@ -2057,12 +2233,6 @@
                     if (channel) {
                         // Augmenter le nombre d'abonnés de la chaîne
                         this.increaseChannelSubscribers(channelId);
-                        
-                        // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
-                        if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
-                            this.userProfile.subscribers++;
-                            this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
-                        }
                     }
                 } else {
                     // Se désabonner
@@ -2070,12 +2240,6 @@
                     if (channel) {
                         // Diminuer le nombre d'abonnés de la chaîne
                         this.decreaseChannelSubscribers(channelId);
-                        
-                        // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
-                        if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
-                            this.userProfile.subscribers = Math.max(0, this.userProfile.subscribers - 1);
-                            this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
-                        }
                     }
                 }
                 
@@ -2087,7 +2251,13 @@
                 const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
                 if (channelIndex !== -1) {
                     this.channels[channelIndex].subscribers++;
-                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_CHANNELS, this.channels);
+                    
+                    // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
+                    if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
+                        this.userProfile.subscribers++;
+                        this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
+                    }
                 }
             }
             
@@ -2095,7 +2265,13 @@
                 const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
                 if (channelIndex !== -1 && this.channels[channelIndex].subscribers > 0) {
                     this.channels[channelIndex].subscribers--;
-                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_CHANNELS, this.channels);
+                    
+                    // Si c'est la chaîne de l'utilisateur actuel, mettre à jour son profil
+                    if (channelId === this.userProfile.username.toLowerCase().replace(/\s+/g, '')) {
+                        this.userProfile.subscribers = Math.max(0, this.userProfile.subscribers - 1);
+                        this.saveToStorage(STORAGE_KEYS.USER_PROFILE, this.userProfile);
+                    }
                 }
             }
             
@@ -2111,7 +2287,7 @@
                 return this.channels.find(channel => channel.id === channelId);
             }
             
-            // Gestion des vues intelligente
+            // Gestion des vues
             trackView(videoId, userId = 'default') {
                 if (!this.viewsTracking[videoId]) {
                     this.viewsTracking[videoId] = {};
@@ -2119,9 +2295,8 @@
                 
                 const videoTracking = this.viewsTracking[videoId];
                 const now = Date.now();
-                const thirtySeconds = 30 * 1000; // 30 secondes en millisecondes
+                const thirtySeconds = 30 * 1000;
                 
-                // Vérifier si l'utilisateur a déjà regardé cette vidéo
                 if (!videoTracking[userId]) {
                     videoTracking[userId] = {
                         lastViewTime: now,
@@ -2132,59 +2307,41 @@
                     const userTracking = videoTracking[userId];
                     const timeSinceLastView = now - userTracking.lastViewTime;
                     
-                    // Si plus de 30 secondes se sont écoulées depuis la dernière vue, compter une nouvelle vue
                     if (timeSinceLastView >= thirtySeconds) {
                         userTracking.viewCount += 1;
                         userTracking.lastViewTime = now;
                     }
                     
-                    // Mettre à jour le temps de visionnage total
                     userTracking.totalWatchTime += Math.min(timeSinceLastView, thirtySeconds);
                 }
                 
                 this.saveToStorage(STORAGE_KEYS.VIEWS_TRACKING, this.viewsTracking);
                 
-                // Mettre à jour le compteur de vues de la vidéo
+                // Mettre à jour le compteur de vues de la vidéo dans les données partagées
                 const video = this.getVideoById(videoId);
                 if (video) {
-                    // Calculer le nombre total de vues uniques (chaque utilisateur peut compter jusqu'à viewCount vues)
                     let totalViews = 0;
                     Object.values(videoTracking).forEach(user => {
                         totalViews += user.viewCount;
                     });
                     
                     video.views = totalViews;
-                    this.updateVideo(videoId, { views: video.views });
-                    
-                    // Mettre à jour les statistiques du profil si c'est une vidéo de l'utilisateur
-                    if (video.uploadedByUser) {
-                        this.updateProfileStats();
-                    }
+                    this.updateVideoInShared(videoId, { views: video.views });
                 }
                 
                 return videoTracking[userId].viewCount;
             }
             
-            updateProfileStats() {
-                const stats = this.getProfileStats();
-                this.updateProfile({
-                    totalViews: stats.totalViews,
-                    videoCount: stats.videoCount
-                });
-            }
-            
-            // Gestion des vidéos
+            // Gestion des vidéos (partagées)
             addVideo(videoData) {
                 let newId = 1;
-                if (this.videos.length > 0) {
-                    newId = Math.max(...this.videos.map(v => v.id)) + 1;
-                }
-                if (this.shorts.length > 0) {
-                    newId = Math.max(newId, Math.max(...this.shorts.map(v => v.id)) + 1);
+                const allSharedVideos = [...this.videos, ...this.shorts];
+                if (allSharedVideos.length > 0) {
+                    newId = Math.max(...allSharedVideos.map(v => v.id)) + 1;
                 }
                 
-                // Déterminer le format et si c'est un short
                 const isShort = this.isShortFormat(videoData.aspectRatio);
+                const channelId = this.userProfile.username.toLowerCase().replace(/\s+/g, '');
                 
                 const newVideo = {
                     id: newId,
@@ -2195,7 +2352,7 @@
                     dislikes: 0,
                     comments: 0,
                     channel: this.userProfile.username,
-                    channelId: this.userProfile.username.toLowerCase().replace(/\s+/g, ''),
+                    channelId: channelId,
                     channelAvatar: this.userProfile.avatar,
                     subscribers: this.userProfile.subscribers.toString(),
                     date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
@@ -2208,22 +2365,19 @@
                     uploadedByUser: true,
                     saved: false,
                     createdAt: new Date().toISOString(),
-                    creatorId: this.userProfile.username // Identifiant du créateur
+                    creatorId: this.userProfile.username
                 };
                 
                 if (isShort) {
                     this.shorts.unshift(newVideo);
-                    this.saveToStorage(STORAGE_KEYS.SHORTS, this.shorts);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_SHORTS, this.shorts);
                 } else {
                     this.videos.unshift(newVideo);
-                    this.saveToStorage(STORAGE_KEYS.VIDEOS, this.videos);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_VIDEOS, this.videos);
                 }
                 
-                // Mettre à jour les statistiques du profil
-                this.updateProfileStats();
-                
                 // Mettre à jour le nombre de vidéos de la chaîne
-                this.updateChannelVideoCount(this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
+                this.updateChannelVideoCount(channelId);
                 
                 return newVideo;
             }
@@ -2231,10 +2385,9 @@
             updateChannelVideoCount(channelId) {
                 const channelIndex = this.channels.findIndex(channel => channel.id === channelId);
                 if (channelIndex !== -1) {
-                    // Compter le nombre de vidéos de cette chaîne
                     const channelVideos = [...this.videos, ...this.shorts].filter(video => video.channelId === channelId);
                     this.channels[channelIndex].videos = channelVideos.length;
-                    this.saveToStorage(STORAGE_KEYS.CHANNELS, this.channels);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_CHANNELS, this.channels);
                 }
             }
             
@@ -2256,10 +2409,8 @@
                 }
             }
             
-            // Vérifier si le format est un short
             isShortFormat(aspectRatio) {
                 if (!aspectRatio) return false;
-                
                 const shortRatios = ["9:16", "1:1", "4:5", "4:3", "2:3"];
                 return shortRatios.includes(aspectRatio);
             }
@@ -2268,37 +2419,26 @@
                 return this.videos.find(v => v.id == id) || this.shorts.find(v => v.id == id);
             }
             
-            updateVideo(id, updates) {
+            updateVideoInShared(id, updates) {
                 let videoIndex = this.videos.findIndex(v => v.id == id);
                 if (videoIndex !== -1) {
                     this.videos[videoIndex] = { ...this.videos[videoIndex], ...updates };
-                    this.saveToStorage(STORAGE_KEYS.VIDEOS, this.videos);
-                    
-                    // Mettre à jour les statistiques si nécessaire
-                    if (updates.views !== undefined && this.videos[videoIndex].uploadedByUser) {
-                        this.updateProfileStats();
-                    }
+                    this.saveSharedData(STORAGE_KEYS.SHARED_VIDEOS, this.videos);
                     return;
                 }
                 
                 videoIndex = this.shorts.findIndex(v => v.id == id);
                 if (videoIndex !== -1) {
                     this.shorts[videoIndex] = { ...this.shorts[videoIndex], ...updates };
-                    this.saveToStorage(STORAGE_KEYS.SHORTS, this.shorts);
-                    
-                    // Mettre à jour les statistiques si nécessaire
-                    if (updates.views !== undefined && this.shorts[videoIndex].uploadedByUser) {
-                        this.updateProfileStats();
-                    }
+                    this.saveSharedData(STORAGE_KEYS.SHARED_SHORTS, this.shorts);
                 }
             }
             
-            // Supprimer une vidéo (fonctionne uniquement pour les vidéos de l'utilisateur)
+            // Supprimer une vidéo (uniquement pour les vidéos de l'utilisateur)
             deleteVideo(id) {
                 const video = this.getVideoById(id);
                 const isUserVideo = video && video.creatorId === this.userProfile.username;
                 
-                // L'utilisateur ne peut supprimer que ses propres vidéos
                 if (!isUserVideo) {
                     alert("Vous ne pouvez supprimer que vos propres vidéos.");
                     return false;
@@ -2307,26 +2447,29 @@
                 const wasInVideos = this.videos.some(v => v.id == id);
                 const wasInShorts = this.shorts.some(v => v.id == id);
                 
+                // Supprimer des données partagées
                 this.videos = this.videos.filter(v => v.id != id);
                 this.shorts = this.shorts.filter(v => v.id != id);
+                
+                // Supprimer des données personnelles
                 this.likedVideos = this.likedVideos.filter(vid => vid != id);
                 this.savedVideos = this.savedVideos.filter(vid => vid != id);
                 
                 // Supprimer les commentaires associés
                 this.comments = this.comments.filter(c => c.videoId != id);
                 
+                // Sauvegarder les données partagées
                 if (wasInVideos) {
-                    this.saveToStorage(STORAGE_KEYS.VIDEOS, this.videos);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_VIDEOS, this.videos);
                 }
                 if (wasInShorts) {
-                    this.saveToStorage(STORAGE_KEYS.SHORTS, this.shorts);
+                    this.saveSharedData(STORAGE_KEYS.SHARED_SHORTS, this.shorts);
                 }
+                
+                // Sauvegarder les données personnelles
                 this.saveToStorage(STORAGE_KEYS.LIKED_VIDEOS, this.likedVideos);
                 this.saveToStorage(STORAGE_KEYS.SAVED_VIDEOS, this.savedVideos);
-                this.saveToStorage(STORAGE_KEYS.COMMENTS, this.comments);
-                
-                // Mettre à jour les statistiques du profil
-                this.updateProfileStats();
+                this.saveSharedData(STORAGE_KEYS.SHARED_COMMENTS, this.comments);
                 
                 // Mettre à jour le nombre de vidéos de la chaîne
                 this.updateChannelVideoCount(this.userProfile.username.toLowerCase().replace(/\s+/g, ''));
@@ -2351,12 +2494,12 @@
                 };
                 
                 this.reports.push(report);
-                this.saveToStorage(STORAGE_KEYS.REPORTS, this.reports);
+                this.saveSharedData(STORAGE_KEYS.SHARED_REPORTS, this.reports);
                 
                 return true;
             }
             
-            // Gestion des commentaires
+            // Gestion des commentaires (partagés)
             addComment(videoId, content) {
                 if (!content.trim()) return;
                 
@@ -2369,23 +2512,22 @@
                     time: "À l'instant",
                     likes: 0,
                     createdAt: new Date().toISOString(),
-                    canDelete: true // L'utilisateur peut supprimer ses propres commentaires
+                    canDelete: true
                 };
                 
                 this.comments.unshift(newComment);
-                this.saveToStorage(STORAGE_KEYS.COMMENTS, this.comments);
+                this.saveSharedData(STORAGE_KEYS.SHARED_COMMENTS, this.comments);
                 
                 // Mettre à jour le compteur de commentaires de la vidéo
                 const video = this.getVideoById(videoId);
                 if (video) {
                     video.comments++;
-                    this.updateVideo(videoId, { comments: video.comments });
+                    this.updateVideoInShared(videoId, { comments: video.comments });
                 }
                 
                 return newComment;
             }
             
-            // Supprimer un commentaire
             deleteComment(commentId) {
                 const commentIndex = this.comments.findIndex(c => c.id == commentId);
                 if (commentIndex === -1) return false;
@@ -2393,7 +2535,6 @@
                 const comment = this.comments[commentIndex];
                 const isUserComment = comment.author === this.userProfile.username;
                 
-                // L'utilisateur peut supprimer uniquement ses propres commentaires
                 if (!isUserComment) {
                     alert("Vous ne pouvez supprimer que vos propres commentaires.");
                     return false;
@@ -2403,32 +2544,29 @@
                 const video = this.getVideoById(comment.videoId);
                 if (video && video.comments > 0) {
                     video.comments--;
-                    this.updateVideo(comment.videoId, { comments: video.comments });
+                    this.updateVideoInShared(comment.videoId, { comments: video.comments });
                 }
                 
                 // Supprimer le commentaire
                 this.comments.splice(commentIndex, 1);
-                this.saveToStorage(STORAGE_KEYS.COMMENTS, this.comments);
+                this.saveSharedData(STORAGE_KEYS.SHARED_COMMENTS, this.comments);
                 
                 return true;
             }
             
             getCommentsForVideo(videoId) {
                 const comments = this.comments.filter(c => c.videoId == videoId);
-                // Marquer les commentaires que l'utilisateur peut supprimer
                 return comments.map(comment => ({
                     ...comment,
                     canDelete: comment.author === this.userProfile.username
                 }));
             }
             
-            // Gestion de l'historique
+            // Gestion de l'historique (personnel)
             addToHistory(videoId) {
-                // Éviter les doublons
                 this.watchHistory = this.watchHistory.filter(id => id != videoId);
                 this.watchHistory.unshift(videoId);
                 
-                // Limiter à 50 éléments
                 if (this.watchHistory.length > 50) {
                     this.watchHistory.pop();
                 }
@@ -2441,7 +2579,7 @@
                 this.saveToStorage(STORAGE_KEYS.HISTORY, this.watchHistory);
             }
             
-            // Gestion des likes/dislikes
+            // Gestion des likes/dislikes (personnels)
             toggleLike(videoId) {
                 const index = this.likedVideos.indexOf(videoId);
                 const video = this.getVideoById(videoId);
@@ -2450,13 +2588,13 @@
                     this.likedVideos.push(videoId);
                     if (video) {
                         video.likes++;
-                        this.updateVideo(videoId, { likes: video.likes });
+                        this.updateVideoInShared(videoId, { likes: video.likes });
                     }
                 } else {
                     this.likedVideos.splice(index, 1);
                     if (video && video.likes > 0) {
                         video.likes--;
-                        this.updateVideo(videoId, { likes: video.likes });
+                        this.updateVideoInShared(videoId, { likes: video.likes });
                     }
                 }
                 
@@ -2468,11 +2606,11 @@
                 const video = this.getVideoById(videoId);
                 if (video) {
                     video.dislikes++;
-                    this.updateVideo(videoId, { dislikes: video.dislikes });
+                    this.updateVideoInShared(videoId, { dislikes: video.dislikes });
                 }
             }
             
-            // Gestion des sauvegardes
+            // Gestion des sauvegardes (personnelles)
             toggleSave(videoId) {
                 const index = this.savedVideos.indexOf(videoId);
                 const video = this.getVideoById(videoId);
@@ -2481,13 +2619,13 @@
                     this.savedVideos.push(videoId);
                     if (video) {
                         video.saved = true;
-                        this.updateVideo(videoId, { saved: true });
+                        this.updateVideoInShared(videoId, { saved: true });
                     }
                 } else {
                     this.savedVideos.splice(index, 1);
                     if (video) {
                         video.saved = false;
-                        this.updateVideo(videoId, { saved: false });
+                        this.updateVideoInShared(videoId, { saved: false });
                     }
                 }
                 
@@ -2520,9 +2658,10 @@
                 );
             }
             
-            // Récupérer les vidéos de l'utilisateur
-            getUserVideos() {
-                return [...this.videos, ...this.shorts].filter(v => v.creatorId === this.userProfile.username);
+            // Récupérer les vidéos de l'utilisateur depuis les données partagées
+            getUserVideosFromShared() {
+                const userChannelId = this.userProfile.username.toLowerCase().replace(/\s+/g, '');
+                return [...this.videos, ...this.shorts].filter(v => v.channelId === userChannelId);
             }
             
             // Vérifier si l'utilisateur est propriétaire d'une vidéo
@@ -2533,7 +2672,7 @@
             
             // Récupérer les vidéos de l'utilisateur par type
             getUserVideosByType(type) {
-                const userVideos = this.getUserVideos();
+                const userVideos = this.getUserVideosFromShared();
                 if (type === 'videos') {
                     return userVideos.filter(v => !v.isShort);
                 } else if (type === 'shorts') {
@@ -2673,6 +2812,11 @@
             // Mettre à jour l'avatar utilisateur
             updateUserAvatar();
             updateProfileDropdown();
+            
+            // Afficher un message de bienvenue avec le nom d'utilisateur
+            setTimeout(() => {
+                alert(`Bienvenue sur YOUREBE !\n\nVous êtes connecté en tant que : ${app.userProfile.username}\n\nNote : Les vidéos sont maintenant partagées entre tous les appareils !`);
+            }, 1000);
             
             // Écouteurs d'événements
             setupEventListeners();
@@ -2848,19 +2992,13 @@
                 `;
                 
                 channelElement.addEventListener('click', () => {
-                    // Charger les vidéos de cette chaîne
-                    loadChannelVideos(channel.id);
+                    // Rechercher les vidéos de cette chaîne
+                    searchInput.value = channel.username;
+                    performSearch();
                 });
                 
                 subscriptionsGrid.appendChild(channelElement);
             });
-        }
-        
-        // Charger les vidéos d'une chaîne
-        function loadChannelVideos(channelId) {
-            // Pour l'instant, nous redirigeons vers la recherche pour cette chaîne
-            searchInput.value = channelId;
-            performSearch();
         }
         
         // Charger le profil utilisateur
@@ -2908,7 +3046,7 @@
             libraryContent.innerHTML = '';
             
             if (app.libraryTab === 'my-videos') {
-                const userVideos = app.getUserVideos();
+                const userVideos = app.getUserVideosFromShared();
                 
                 if (userVideos.length === 0) {
                     libraryContent.innerHTML = `
@@ -3191,7 +3329,6 @@
             
             // Écouter la pause de la vidéo
             mainVideo.onpause = () => {
-                // Pas besoin de réinitialiser, juste arrêter le timer
                 if (videoWatchTimer) {
                     clearTimeout(videoWatchTimer);
                     videoWatchTimer = null;
@@ -3200,7 +3337,6 @@
             
             // Écouter la reprise de la vidéo
             mainVideo.onplay = () => {
-                // Redémarrer le suivi si la vidéo a été mise en pause
                 if (!videoWatchTimer && !hasCountedView) {
                     startVideoTracking(videoId);
                 }
@@ -3226,7 +3362,6 @@
                 commentElement.className = 'comment-item';
                 commentElement.dataset.commentId = comment.id;
                 
-                // Ajouter des boutons d'action si l'utilisateur peut supprimer le commentaire
                 const actions = comment.canDelete ? `
                     <div class="comment-actions">
                         <button class="comment-action-btn delete-comment-btn" data-comment-id="${comment.id}">
@@ -3249,7 +3384,6 @@
                 commentList.appendChild(commentElement);
             });
             
-            // Ajouter des écouteurs d'événements pour les boutons de suppression de commentaires
             document.querySelectorAll('.delete-comment-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -3263,7 +3397,6 @@
         function loadRecommendedVideos(currentVideoId) {
             recommendedVideosContainer.innerHTML = '';
             
-            // Filtrer pour exclure la vidéo actuelle
             const recommendedVideos = app.videos.filter(v => v.id != currentVideoId);
             
             if (recommendedVideos.length === 0) {
@@ -3321,7 +3454,6 @@
             const video = app.getVideoById(videoId);
             if (!video) return;
             
-            // Vérifier que l'utilisateur est propriétaire
             if (!app.isVideoOwner(videoId)) {
                 alert("Vous ne pouvez modifier que vos propres vidéos.");
                 return;
@@ -3340,7 +3472,6 @@
             const video = app.getVideoById(videoId);
             if (!video) return;
             
-            // Vérifier que l'utilisateur est propriétaire
             if (!app.isVideoOwner(videoId)) {
                 alert("Vous ne pouvez modifier que vos propres vidéos.");
                 return;
@@ -3364,7 +3495,6 @@
                 const success = app.deleteVideo(videoId);
                 
                 if (success) {
-                    // Recharger les sections concernées
                     if (app.currentSection === 'home') {
                         loadHomeVideos();
                     }
@@ -3382,7 +3512,6 @@
                         showSection('home');
                     }
                     
-                    // Mettre à jour le dropdown du profil
                     updateProfileDropdown();
                     
                     alert("Vidéo supprimée avec succès !");
@@ -3404,10 +3533,8 @@
                 const success = app.deleteComment(commentId);
                 
                 if (success) {
-                    // Recharger les commentaires
                     loadComments(app.currentVideoId);
                     
-                    // Mettre à jour le compteur
                     const video = app.getVideoById(app.currentVideoId);
                     if (video) {
                         commentsCount.textContent = `${video.comments} commentaire${video.comments !== 1 ? 's' : ''}`;
@@ -3438,7 +3565,6 @@
             const profile = app.userProfile;
             profileNameInput.value = profile.username;
             
-            // Charger les options d'avatar
             loadAvatarOptions();
             
             profileModal.style.display = 'flex';
@@ -3454,7 +3580,6 @@
         
         // Ouvrir le modal de signalement
         function openReportModal() {
-            // Réinitialiser le formulaire
             document.querySelectorAll('input[name="report-reason"]').forEach(radio => {
                 radio.checked = false;
             });
@@ -3473,7 +3598,6 @@
         function loadAvatarOptions() {
             avatarOptions.innerHTML = '';
             
-            // Avatars par défaut (générés avec DiceBear)
             const defaultAvatars = [
                 { id: 'avatar1', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=3ea6ff' },
                 { id: 'avatar2', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan&backgroundColor=ff6b6b' },
@@ -3505,7 +3629,6 @@
                 avatarOptions.appendChild(option);
             });
             
-            // Option pour uploader un avatar personnalisé
             const uploadOption = document.createElement('div');
             uploadOption.className = 'avatar-option avatar-upload';
             uploadOption.innerHTML = `<i class="fas fa-plus"></i>`;
@@ -3523,7 +3646,6 @@
             const selector = document.getElementById('thumbnail-selector');
             selector.innerHTML = '';
             
-            // Miniatures par défaut pour tous types de vidéos
             const defaultThumbnails = [
                 { id: 'default1', url: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80', label: 'Nature' },
                 { id: 'default2', url: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80', label: 'Technologie' },
@@ -3574,7 +3696,6 @@
                     
                     let aspectRatio;
                     
-                    // Déterminer le ratio d'aspect
                     if (Math.abs(ratio - 9/16) < 0.1) aspectRatio = "9:16";
                     else if (Math.abs(ratio - 1) < 0.1) aspectRatio = "1:1";
                     else if (Math.abs(ratio - 4/5) < 0.1) aspectRatio = "4:5";
@@ -3583,7 +3704,6 @@
                     else if (Math.abs(ratio - 16/9) < 0.1) aspectRatio = "16:9";
                     else aspectRatio = "other";
                     
-                    // Formater la durée
                     const duration = Math.round(video.duration);
                     const minutes = Math.floor(duration / 60);
                     const seconds = duration % 60;
@@ -3596,7 +3716,6 @@
                         height: height
                     });
                     
-                    // Nettoyer l'URL
                     URL.revokeObjectURL(video.src);
                 };
                 
@@ -3685,7 +3804,6 @@
                 `;
                 
                 channelElement.addEventListener('click', () => {
-                    // Rechercher les vidéos de cette chaîne
                     searchInput.value = channel.username;
                     performSearch();
                 });
@@ -3849,7 +3967,6 @@
                     subscribeBtn.textContent = subscribed ? "Abonné" : "S'abonner";
                     subscribeBtn.classList.toggle('subscribed', subscribed);
                     
-                    // Mettre à jour le compte d'abonnés affiché
                     const video = app.getVideoById(app.currentVideoId);
                     if (video) {
                         const channel = app.getChannelById(channelId);
@@ -3859,7 +3976,6 @@
                         }
                     }
                     
-                    // Recharger les abonnements si on est dans cette section
                     if (app.currentSection === 'subscriptions') {
                         loadSubscriptions();
                     }
@@ -3916,7 +4032,6 @@
                     const file = videoFileInput.files[0];
                     fileNameDisplay.textContent = `Fichier sélectionné : ${file.name}`;
                     
-                    // Détecter le format de la vidéo
                     const videoInfo = await detectVideoFormat(file);
                     const isShort = app.isShortFormat(videoInfo.aspectRatio);
                     
@@ -3942,7 +4057,6 @@
                     customAvatarFile = customAvatarInput.files[0];
                     selectedAvatarOption = null;
                     
-                    // Désélectionner tous les avatars par défaut
                     document.querySelectorAll('.avatar-option').forEach(opt => {
                         opt.classList.remove('selected');
                     });
@@ -3968,7 +4082,6 @@
                     const file = e.dataTransfer.files[0];
                     fileNameDisplay.textContent = `Fichier sélectionné : ${file.name}`;
                     
-                    // Détecter le format de la vidéo
                     const videoInfo = await detectVideoFormat(file);
                     const isShort = app.isShortFormat(videoInfo.aspectRatio);
                     
@@ -3996,13 +4109,11 @@
                 
                 let thumbnailUrl = null;
                 
-                // Traiter la miniature personnalisée si fournie
                 if (customThumbnailFile) {
                     thumbnailUrl = await readFileAsDataURL(customThumbnailFile);
                 }
                 
                 if (!videoToEdit) {
-                    // NOUVELLE VIDÉO
                     let videoInfo = {
                         aspectRatio: "16:9",
                         duration: "5:30"
@@ -4012,10 +4123,8 @@
                         videoInfo = await detectVideoFormat(videoFile);
                     }
                     
-                    // Créer un aperçu de la vidéo locale
                     const videoUrl = videoFile ? URL.createObjectURL(videoFile) : "#";
                     
-                    // Ajouter la nouvelle vidéo
                     const newVideo = app.addVideo({
                         title: title,
                         description: description,
@@ -4026,21 +4135,16 @@
                         category: category
                     });
                     
-                    // Recharger les sections
                     if (newVideo.isShort) {
                         loadShorts();
                     } else {
                         loadHomeVideos();
                     }
                     
-                    // Mettre à jour le dropdown du profil
                     updateProfileDropdown();
                     
-                    // Jouer la nouvelle vidéo
                     playVideo(newVideo.id);
                 } else {
-                    // MODIFICATION DE VIDÉO EXISTANTE
-                    // Vérifier que l'utilisateur est propriétaire
                     if (!app.isVideoOwner(videoToEdit)) {
                         alert("Vous ne pouvez modifier que vos propres vidéos.");
                         closeUploadModal();
@@ -4053,18 +4157,15 @@
                         category: category
                     };
                     
-                    // Ajouter la miniature seulement si une nouvelle a été fournie
                     if (thumbnailUrl) {
                         updates.thumbnail = thumbnailUrl;
                     }
                     
-                    app.updateVideo(videoToEdit, updates);
+                    app.updateVideoInShared(videoToEdit, updates);
                     
-                    // Recharger les sections concernées
                     loadHomeVideos();
                     loadLibraryContent();
                     
-                    // Si la vidéo modifiée est celle en cours de lecture
                     if (app.currentVideoId === videoToEdit) {
                         const video = app.getVideoById(videoToEdit);
                         videoTitle.textContent = video.title;
@@ -4084,11 +4185,9 @@
                 const username = profileNameInput.value.trim();
                 let avatarUrl = app.userProfile.avatar;
                 
-                // Traiter l'avatar personnalisé si fourni
                 if (customAvatarFile) {
                     avatarUrl = await readFileAsDataURL(customAvatarFile);
                 } else if (selectedAvatarOption) {
-                    // Utiliser l'avatar par défaut sélectionné
                     avatarUrl = selectedAvatarOption.url;
                 }
                 
@@ -4097,183 +4196,14 @@
                     return;
                 }
                 
-                // Mettre à jour le profil
                 app.updateProfile({
                     username: username,
                     avatar: avatarUrl
                 });
                 
-                // Mettre à jour toutes les vidéos de l'utilisateur avec le nouveau nom et avatar
-                const userVideos = app.getUserVideos();
-                userVideos.forEach(video => {
-                    app.updateVideo(video.id, {
-                        channel: username,
-                        channelId: username.toLowerCase().replace(/\s+/g, ''),
-                        channelAvatar: avatarUrl
-                    });
-                });
-                
-                // Mettre à jour tous les commentaires de l'utilisateur
-                app.comments.forEach(comment => {
-                    if (comment.author === app.userProfile.username) {
-                        comment.author = username;
-                        comment.authorAvatar = avatarUrl;
-                    }
-                });
-                app.saveToStorage(STORAGE_KEYS.COMMENTS, app.comments);
-                
-                // Mettre à jour l'interface
                 updateUserAvatar();
                 updateProfileDropdown();
                 
-                // Recharger les sections si nécessaire
                 if (app.currentSection === 'home') {
                     loadHomeVideos();
-                }
-                if (app.currentSection === 'profile') {
-                    loadProfile();
-                }
-                if (app.currentSection === 'library' && app.libraryTab === 'my-videos') {
-                    loadLibraryContent();
-                }
-                if (app.currentSection === 'subscriptions') {
-                    loadSubscriptions();
-                }
-                
-                alert("Profil mis à jour avec succès !");
-                closeProfileModal();
-            });
-            
-            closeProfileModalBtn.addEventListener('click', closeProfileModal);
-            cancelProfileBtn.addEventListener('click', closeProfileModal);
-            
-            // Modal de signalement
-            closeReportModalBtn.addEventListener('click', closeReportModal);
-            cancelReportBtn.addEventListener('click', closeReportModal);
-            
-            submitReportBtn.addEventListener('click', () => {
-                if (!videoToReport) return;
-                
-                const selectedReason = document.querySelector('input[name="report-reason"]:checked');
-                if (!selectedReason) {
-                    alert("Veuillez sélectionner une raison pour le signalement.");
-                    return;
-                }
-                
-                const reason = selectedReason.value;
-                const details = reportDetails.value.trim();
-                
-                const success = app.reportVideo(videoToReport, reason, details);
-                
-                if (success) {
-                    alert("Merci pour votre signalement. Nous examinerons cette vidéo dans les plus brefs délais.");
-                    closeReportModal();
-                } else {
-                    alert("Une erreur s'est produite lors du signalement. Veuillez réessayer.");
-                }
-            });
-            
-            // Gestion de la miniature dans le modal d'édition
-            document.getElementById('save-thumbnail').addEventListener('click', async () => {
-                if (!videoToEdit) return;
-                
-                // Vérifier que l'utilisateur est propriétaire
-                if (!app.isVideoOwner(videoToEdit)) {
-                    alert("Vous ne pouvez modifier que vos propres vidéos.");
-                    closeThumbnailModal();
-                    return;
-                }
-                
-                const newThumbnailFile = document.getElementById('new-thumbnail').files[0];
-                let thumbnailUrl = null;
-                
-                if (newThumbnailFile) {
-                    // Lire la nouvelle miniature
-                    thumbnailUrl = await readFileAsDataURL(newThumbnailFile);
-                } else if (selectedThumbnailOption) {
-                    // Utiliser une miniature par défaut sélectionnée
-                    thumbnailUrl = selectedThumbnailOption.url;
-                }
-                
-                if (thumbnailUrl) {
-                    // Mettre à jour la miniature de la vidéo
-                    app.updateVideo(videoToEdit, { thumbnail: thumbnailUrl });
-                    
-                    // Recharger les sections concernées
-                    const video = app.getVideoById(videoToEdit);
-                    if (video.isShort) {
-                        loadShorts();
-                    } else {
-                        loadHomeVideos();
-                    }
-                    
-                    loadLibraryContent();
-                    
-                    // Si la vidéo modifiée est celle en cours de lecture
-                    if (app.currentVideoId === videoToEdit) {
-                        mainVideo.poster = video.thumbnail;
-                    }
-                    
-                    alert("Miniature mise à jour avec succès !");
-                } else {
-                    alert("Veuillez sélectionner une miniature");
-                    return;
-                }
-                
-                closeThumbnailModal();
-            });
-            
-            document.getElementById('cancel-thumbnail').addEventListener('click', closeThumbnailModal);
-            document.getElementById('close-thumbnail-modal').addEventListener('click', closeThumbnailModal);
-            
-            // Effacer l'historique
-            document.getElementById('clear-history').addEventListener('click', () => {
-                if (confirm("Voulez-vous vraiment effacer tout votre historique ?")) {
-                    app.clearHistory();
-                    loadHistory();
-                }
-            });
-            
-            // Fermer les modals en cliquant à l'extérieur
-            [uploadModal, profileModal, thumbnailModal, reportModal].forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.style.display = 'none';
-                        if (modal === uploadModal) {
-                            uploadForm.reset();
-                            fileNameDisplay.textContent = '';
-                            videoToEdit = null;
-                            customThumbnailFile = null;
-                        } else if (modal === profileModal) {
-                            profileForm.reset();
-                            selectedAvatarOption = null;
-                            customAvatarFile = null;
-                        } else if (modal === thumbnailModal) {
-                            videoToEdit = null;
-                            selectedThumbnailOption = null;
-                            document.getElementById('new-thumbnail').value = '';
-                        } else if (modal === reportModal) {
-                            videoToReport = null;
-                            document.querySelectorAll('input[name="report-reason"]').forEach(radio => {
-                                radio.checked = false;
-                            });
-                            reportDetails.value = '';
-                        }
-                    }
-                });
-            });
-        }
-        
-        // Effectuer une recherche
-        function performSearch() {
-            const query = searchInput.value.trim();
-            if (!query) return;
-            
-            showSearchResults(query);
-        }
-
-        // Initialiser l'application
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html>
+               
